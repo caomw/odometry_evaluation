@@ -236,9 +236,6 @@ if __name__ == "__main__":
         find_equal_paths(ground_truth, odometry, args.path_length)
     print "Found %i paths of %.2fm to compare" % (len(odometry_paths), args.path_length)
 
-    for i in range(10):
-        print ground_truth_paths[i][-1][0], odometry_paths[i][-1][0]
-
     with open(args.outfile, 'w') as outfile:
         outfile.write("#")
         for x in range(1,28):
@@ -248,8 +245,10 @@ if __name__ == "__main__":
                     "gt_x  gt_y  gt_z  gt_qx gt_qy gt_qz gt_qw "
                     "gt_vx gt_vy gt_vz gt_vr gt_vp gt_vy "
                     "od_x  od_y  od_z  od_qx od_qy od_qz od_qw "
-                    "od_vx od_vy od_vz od_vr od_vp od_vy\n")
+                    "od_vx od_vy od_vz od_vr od_vp od_vy t\n")
         sys.stdout.write("\n")
+        start_time = ground_truth_paths[0][0][0]
+        print "Start time: ", start_time
         for i in range(len(ground_truth_paths)):
             sys.stdout.write("\r%.2f%%" % (100 * i / len(ground_truth_paths)))
             gt_path = ground_truth_paths[i]
@@ -265,6 +264,7 @@ if __name__ == "__main__":
                 outfile.write("%f " % x) 
             for v in od_stats[0:6]:
                 outfile.write("%f " % v)
+            outfile.write("%f" % (gt_path[-1][0] - start_time))
             outfile.write("\n")
         sys.stdout.write("\n")
 
