@@ -19,7 +19,7 @@ def adapt(ground_truth, odometry):
     """
     finds first and last matching timestamps of given
     trajectories. Cuts both to match the same time
-    frame and rebases both to start at zero.
+    frame and rebases both to start at zero origin.
     """
     eps = 0.005 # epsilon for equal time stamps
     gt_start = 0
@@ -41,6 +41,22 @@ def adapt(ground_truth, odometry):
     gt = ground_truth[gt_start:gt_end+1]
     od = odometry[od_start:od_end+1]
     return rebase(gt), rebase(od)
+
+def sample_equal(ground_truth, odometry):
+    """
+    Resamples the ground truth to have the same entrys as odometry
+    matching the time stamp.
+    The paths are supposed to have the same start time and ground_truth
+    is supposed to have more samples than odometry.
+    """
+    eps = 0.005 # epsilon for equal time stamps
+    sampled_ground_truth = []
+    index = 0
+    for data_point in odometry:
+        while data_point[0] - ground_truth[index][0] > eps:
+            index = index + 1
+        sampled_ground_truth.append(ground_truth[index])
+    return np.array(sampled_ground_truth), odometry
 
 def calc_dist_xyz(data_point1, data_point2):
     xdiff = data_point1[1] - data_point2[1]
@@ -86,6 +102,26 @@ def calc_stats(path):
         roll, pitch, yaw,
         translation, angle ]
 
+def calc_tf_vel(point1, point2):
+    dt = point2[0] - point1[0]
+    tf_start = to_transform(point1)
+    tf_end = to_transform(point2)
+    tf_delta = tf.concatenate_matrices(tf.inverse_matrix(tf_start), tf_end)
+    roll, pitch, yaw = tf.euler_from_matrix(tf_start)
+    droll, dpitch, dyaw = tf.euler_from_matrix(tf_delta)
+    translation_vec = tf.translation_from_matrix(tf_delta)
+#    translation = np.linalg.norm(translation_vec)
+#    angle, direc, point = tf.rotation_from_matrix(tf_delta)
+    return [
+        point1[1], point1[2], point1[3], 
+        roll, pitch, yaw,
+        translation_vec[0]/dt, translation_vec[1]/dt, translation_vec[2]/dt, 
+        droll/dt, dpitch/dt, dyaw/dt ]
+#        translation_vec[0], translation_vec[1], translation_vec[2], 
+#        roll, pitch, yaw,
+#        translation, angle ]
+
+
 def split_into_paths(ground_truth, path_length):
     """
     Splits given ground truth into a set of paths with given length,
@@ -115,6 +151,26 @@ def find_subpaths_by_distance(path, path_length):
     Returns tuples to index the given ground_truth (start,end).
     end is the first index at which calc_dist(path[start], path[end])
     is bigger than path_length.
+    """
+    start_index = 0
+    end_index = 0
+    path_indices = []
+    while start_index < len(path):
+        while end_index < len(path) and calc_dist(
+                path[start_index], path[end_index]) < path_length:
+            end_index = end_index + 1
+        if end_index == len(path):
+            break;
+        path_indices.append((start_index, end_index))
+        start_index = start_index + 1
+    return path_indices
+
+def find_subpaths_by_time(path, delta_t):
+    """
+    Searches sub-paths in given grond_truth with given time length.
+    Returns tuples to index the given ground_truth (start,end).
+    end is the first index at which the time delta path[end] - path[start]
+    is bigger than delta_t.
     """
     start_index = 0
     end_index = 0
@@ -199,6 +255,47 @@ def plot_paths(ground_truth, odometry):
     axes.legend()
     plt.show()
 
+def load_data(ground_truth_file, odometry_file):
+    ground_truth = pylab.loadtxt(ground_truth_file)
+    odometry = pylab.loadtxt(odometry_file, delimiter=',', skiprows=1, 
+            usecols=(2,5,6,7,8,9,10,11,48,49,50,51,52,53))
+    # odometry log is in nanoseconds, so we have to convert to seconds
+    odometry[:,0] = odometry[:,0]/1e9
+    return ground_truth, odometry
+
+def write_joint_data(ground_truth, odometry, filename):
+    eps = 0.005
+    assert(len(ground_truth) == len(odometry))
+    with open(filename, 'w') as outfile:
+        outfile.write("#")
+        for x in range(1,31):
+            outfile.write("%6i" % x)
+        outfile.write("\n")
+        outfile.write("#     ts  "
+                    "gt_x  gt_y  gt_z  gt_ro gt_pi gt_ya "
+                    "gt_vx gt_vy gt_vz gt_vr gt_vp gt_vy "
+                    "od_x  od_y  od_z  od_ro od_pi od_ya "
+                    "od_vx od_vy od_vz od_vr od_vp od_vy   t\n")
+        sys.stdout.write("\n")
+        start_time = ground_truth[0][0]
+        for i in range(len(ground_truth)):
+            gt = ground_truth[i]
+            od = odometry[i]
+            if (abs(gt[0] - od[0]) > eps):
+                raise Error("ground truth and odometry differ by %f secs."
+                        % abs(gt[0] - od[0]))
+            sys.stdout.write("\r%.2f%%" % (100 * i / len(ground_truth)))
+            outfile.write("%.9F " % gt[0])
+            for x in calc_tf_vel(ground_truth[i], ground_truth[i-1]):
+                outfile.write("%f " % x) 
+            for x in od[1:4]:
+                outfile.write("%f " % x) 
+            for v in od[8:14]:
+                outfile.write("%f " % v)
+            outfile.write("%f " % (gt[0] - start_time))
+            outfile.write("\n")
+        sys.stdout.write("\n")
+
 
 if __name__ == "__main__":
     import argparse
@@ -215,13 +312,7 @@ if __name__ == "__main__":
             default=0.5)
     args = parser.parse_args()
 
-    ground_truth = pylab.loadtxt(args.ground_truth_file)
-    ground_truth = rebase(ground_truth)
-    odometry = pylab.loadtxt(args.odometry_file, delimiter=',', skiprows=1, 
-            usecols=(2,5,6,7,8,9,10,11))
-    # odometry log is in nanoseconds, so we have to convert to seconds
-    odometry[:,0] = odometry[:,0]/1e9
-
+    ground_truth, odometry = load_data(args.ground_truth_file, args.odometry_file)
     print "Loaded", len(ground_truth), "GT data points."
     print "Loaded", len(odometry), "OD data points."
 
@@ -232,22 +323,31 @@ if __name__ == "__main__":
     print "GT time frame: %.9F %.9F " % (ground_truth[0][0], ground_truth[-1][0])
     print "OD time frame: %.9F %.9F " % (odometry[0][0], odometry[-1][0])
 
+    ground_truth, odometry = sample_equal(ground_truth, odometry)
+
+    print "Resampled, GT has %i data points, OD has %i data points." % (len(ground_truth), len(odometry))
+
+    write_joint_data(ground_truth, odometry, args.outfile)
+
+"""
     ground_truth_paths, odometry_paths = \
         find_equal_paths(ground_truth, odometry, args.path_length)
     print "Found %i paths of %.2fm to compare" % (len(odometry_paths), args.path_length)
 
     with open(args.outfile, 'w') as outfile:
         outfile.write("#")
-        for x in range(1,28):
+        for x in range(1,31):
             outfile.write("%6i" % x)
         outfile.write("\n")
         outfile.write("#     ts  "
                     "gt_x  gt_y  gt_z  gt_qx gt_qy gt_qz gt_qw "
                     "gt_vx gt_vy gt_vz gt_vr gt_vp gt_vy "
                     "od_x  od_y  od_z  od_qx od_qy od_qz od_qw "
-                    "od_vx od_vy od_vz od_vr od_vp od_vy t\n")
+                    "od_vx od_vy od_vz od_vr od_vp od_vy   t   gt_l od_l\n")
         sys.stdout.write("\n")
         start_time = ground_truth_paths[0][0][0]
+        gt_length = 0
+        od_length = 0
         print "Start time: ", start_time
         for i in range(len(ground_truth_paths)):
             sys.stdout.write("\r%.2f%%" % (100 * i / len(ground_truth_paths)))
@@ -255,18 +355,22 @@ if __name__ == "__main__":
             od_path = odometry_paths[i]
             gt_stats = calc_stats(gt_path)
             od_stats = calc_stats(od_path)
-            outfile.write("%.9F " % gt_path[-1][0])
-            for x in gt_path[-1][1:8]:
+            outfile.write("%.9F " % gt_path[0][0])
+            for x in gt_path[0][1:8]:
                 outfile.write("%f " % x) 
             for v in gt_stats[0:6]:
                 outfile.write("%f " % v)
-            for x in od_path[-1][1:8]:
+            for x in od_path[0][1:8]:
                 outfile.write("%f " % x) 
             for v in od_stats[0:6]:
                 outfile.write("%f " % v)
-            outfile.write("%f" % (gt_path[-1][0] - start_time))
+            outfile.write("%f " % (gt_path[0][0] - start_time))
+            outfile.write("%f %f " % 
+                    (calc_length_sampled(ground_truth_paths[0][0], gt_path[0])),
+                     calc_length_sampled(odometry_paths[0][0], od_path[0]))
             outfile.write("\n")
         sys.stdout.write("\n")
+        """
 
 #    true_translations = []
 #    estimated_translations = []

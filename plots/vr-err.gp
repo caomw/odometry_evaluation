@@ -1,6 +1,8 @@
 set grid
 set term wxt 0
-set title "Velocitiy errors"
+set title "Rotational velocitiy error"
+set xlabel "t [s]"
+set ylabel "error [rad/s]"
 plot \
        "`echo $FILE`" using ($12-$25) w l title "Velocity Error Roll", \
        "`echo $FILE`" using ($13-$26) w l title "Velocity Error Pitch" , \
