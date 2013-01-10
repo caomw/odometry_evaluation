@@ -156,7 +156,7 @@ if __name__ == "__main__":
             help='file with logged odometry')
     parser.add_argument('outfile',
             help='output file for extracted stats')
-    parser.add_argument('--sample-step', type=float,
+    parser.add_argument('-s','--sample-step', type=float,
             help='step size of samples in meters',
             default=1.0)
     args = parser.parse_args()
