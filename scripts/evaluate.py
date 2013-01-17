@@ -38,6 +38,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     data = pylab.loadtxt(args.filename)
+    total_dist_gt = 0
+    total_dist_od = 0
+    for row in data:
+        total_dist_gt += math.sqrt(row[1]*row[1] + row[2]*row[2] + row[3]*row[3])
+        total_dist_od += math.sqrt(row[13]*row[13] + row[14]*row[14] + row[15]*row[15])
     np.set_printoptions(precision=4)
     errors = data[:,19:25]-data[:,7:13]
     errors100 = errors/data[:,7:13]*100
@@ -50,15 +55,18 @@ if __name__ == "__main__":
     r_est = data[:,22:25]
     yaw_err = calc_angle_diff(r[2], r_est[2])
     yaw_err100 = yaw_err/r[2]*100
+    print chr(27)+"[0m"
     print "%i data samples." % len(data)
-    print "Average velocities in data (GT):\n", np.average(data[:,7:13], 0)
-    print "Average velocities in data (OD):\n", np.average(data[:,19:25], 0)
-    print "Average error (should be near zero)\n", np.average(errors, 0), np.std(errors, 0)
-    print "Average absolute error\n", np.average(np.abs(errors), 0), np.std(np.abs(errors), 0)
-    print "Error percentage (should be near zero)\n", np.average(errors100, 0), np.std(errors100, 0)
-    print "Error percentage absolute error\n", np.average(np.abs(errors100), 0), np.std(np.abs(errors100), 0)
-    print "Translation error:\n", np.average(t_err, 0), np.std(t_err, 0)
-    print "Translation error %:\n", np.average(t_err100, 0), np.std(t_err100, 0)
-    print "Rotational yaw error:\n", np.average(yaw_err, 0), np.std(yaw_err, 0)
-    print "Rotational yaw error %:\n", np.average(yaw_err100, 0), np.std(yaw_err100, 0)
+    print chr(27)+"[1;36m"+"Total distance in data (GT): "+chr(27)+"[0m", total_dist_gt
+    print chr(27)+"[1;36m"+"Total distance in data (OD): "+chr(27)+"[0m", total_dist_od
+    print chr(27)+"[1;36m"+"Average velocities in data (GT):\n"+chr(27)+"[0m", np.average(data[:,7:13], 0)
+    print chr(27)+"[1;36m"+"Average velocities in data (OD):\n"+chr(27)+"[0m", np.average(data[:,19:25], 0)
+    print chr(27)+"[1;36m"+"Average error (should be near zero)\n"+chr(27)+"[0m", np.average(errors, 0), np.std(errors, 0)
+    print chr(27)+"[1;36m"+"Average absolute error\n"+chr(27)+"[0m", np.average(np.abs(errors), 0), np.std(np.abs(errors), 0)
+    print chr(27)+"[1;36m"+"Error percentage (should be near zero)\n"+chr(27)+"[0m", np.average(errors100, 0), np.std(errors100, 0)
+    print chr(27)+"[1;36m"+"Error percentage absolute error\n"+chr(27)+"[0m", np.average(np.abs(errors100), 0), np.std(np.abs(errors100), 0)
+    print chr(27)+"[1;36m"+"Translation error:\n"+chr(27)+"[0m", np.average(t_err, 0), np.std(t_err, 0)
+    print chr(27)+"[1;36m"+"Translation error %:\n"+chr(27)+"[0m", np.average(t_err100, 0), np.std(t_err100, 0)
+    print chr(27)+"[1;36m"+"Rotational yaw error:\n"+chr(27)+"[0m", np.average(yaw_err, 0), np.std(yaw_err, 0)
+    print chr(27)+"[1;36m"+"Rotational yaw error %:\n"+chr(27)+"[0m", np.average(yaw_err100, 0), np.std(yaw_err100, 0)
 

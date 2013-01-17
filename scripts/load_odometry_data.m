@@ -1,0 +1,1 @@
+A = importdata('../data/matlab/data-odometer-filtered.txt')

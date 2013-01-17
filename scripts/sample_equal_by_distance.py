@@ -109,6 +109,7 @@ def rebase(path):
     return path
 
 def load_data(ground_truth_file, odometry_file):
+    # load float data
     ground_truth = pylab.loadtxt(ground_truth_file)
     odometry = pylab.loadtxt(odometry_file, delimiter=',', skiprows=1, 
             usecols=(2,5,6,7,8,9,10,11,48,49,50,51,52,53))
@@ -139,12 +140,12 @@ def write_joint_data(ground_truth, odometry, filename):
             sys.stdout.write("\r%.2f%%" % (100 * i / len(ground_truth)))
             outfile.write("%.9F " % (ground_truth[i][0] - start_time))
             for x in calc_tf_vel(ground_truth[i], ground_truth[i+1]):
-                outfile.write("%f " % x) 
+                outfile.write("%f " % x)
             for x in calc_tf_vel(odometry[i], odometry[i+1]):
                 outfile.write("%f " % x) 
             outfile.write("%.9F " % ground_truth[i][0])
             outfile.write("\n")
-        sys.stdout.write("\n")
+        sys.stdout.write("\n")            
 
 if __name__ == "__main__":
     import argparse

@@ -1,0 +1,12 @@
+digraph G {
+"/odom" -> "/base_link"[label="Broadcaster: /stereo_odometer\nAverage rate: 8.365 Hz\nMost recent transform: 11332342.466 sec old \nBuffer length: 4.901 sec\n"];
+"/stereo_down_optical" -> "/mosaic"[label="Broadcaster: /mosaic_processor_node\nAverage rate: 1.219 Hz\nMost recent transform: 11332343.566 sec old \nBuffer length: 4.101 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1358349254.202"[ shape=plaintext ] ;
+ }->"/odom";
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1358349254.202"[ shape=plaintext ] ;
+ }->"/stereo_down_optical";
+}
