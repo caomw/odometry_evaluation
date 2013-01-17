@@ -38,11 +38,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     data = pylab.loadtxt(args.filename)
-    total_dist_gt = 0
-    total_dist_od = 0
-    for row in data:
-        total_dist_gt += math.sqrt(row[1]*row[1] + row[2]*row[2] + row[3]*row[3])
-        total_dist_od += math.sqrt(row[13]*row[13] + row[14]*row[14] + row[15]*row[15])
+    mean_dist_gt = 0;
+    mean_dist_od = 0;
+    for i in range(len(data) - 1):
+        xdiff_gt = data[i,1] - data[i+1,1]
+        ydiff_gt = data[i,2] - data[i+1,2]
+        zdiff_gt = data[i,3] - data[i+1,3]
+        xdiff_od = data[i,13] - data[i+1,13]
+        ydiff_od = data[i,14] - data[i+1,14]
+        zdiff_od = data[i,15] - data[i+1,15]
+        mean_dist_gt += math.sqrt(xdiff_gt*xdiff_gt + ydiff_gt*ydiff_gt + zdiff_gt*zdiff_gt)
+        mean_dist_od += math.sqrt(xdiff_od*xdiff_od + ydiff_od*ydiff_od + zdiff_od*zdiff_od)
+    mean_dist_gt = mean_dist_gt / (len(data) - 1)
+    mean_dist_od = mean_dist_od / (len(data) - 1)
+    total_dist_gt = len(data) * mean_dist_gt
+    total_dist_od = len(data) * mean_dist_od
     np.set_printoptions(precision=4)
     errors = data[:,19:25]-data[:,7:13]
     errors100 = errors/data[:,7:13]*100
