@@ -80,6 +80,37 @@ def sample_equal_by_distance(ground_truth, odometry, sample_step):
         gt_index = next_index
     return np.array(gt_samples), np.array(od_samples)
 
+def sample_equal(ground_truth, odometry):
+    """ 
+    Samples ground truth and odometry searching for
+    matching timestamps without any limitations of
+    time or distance. 
+    In most cases that means that some ground truth
+    samples are sorted out as the odometry is not fast
+    enough.
+    """
+    eps = 1e-3
+    gt_index = 0
+    od_index = 0
+    gt_samples = []
+    od_samples = []
+    try:
+        while True:
+            while odometry[od_index,0] - ground_truth[gt_index,0] > eps:
+                gt_index = gt_index + 1
+            while ground_truth[gt_index,0] - odometry[od_index,0] > eps :
+                od_index = od_index + 1
+
+            if abs(ground_truth[gt_index,0] - odometry[od_index,0]) < eps:
+                # save
+                gt_samples.append(ground_truth[gt_index])
+                od_samples.append(odometry[od_index])
+                od_index = od_index + 1
+                gt_index = gt_index + 1
+    except IndexError:
+        pass
+    return np.array(gt_samples), np.array(od_samples)
+
 def calc_tf_vel(point1, point2):
     dt = point2[0] - point1[0]
     tf_start = to_transform(point1)
@@ -122,9 +153,12 @@ def rebase(path):
 def load_data(ground_truth_file, odometry_file):
     ground_truth = pylab.loadtxt(ground_truth_file)
     odometry = pylab.loadtxt(odometry_file, delimiter=',', skiprows=1, 
-            usecols=(2,5,6,7,8,9,10,11,48,49,50,51,52,53))
+            usecols=(2,5,6,7,8,9,10,11,48,49,50,51,52,53,12))
     # odometry log is in nanoseconds, so we have to convert to seconds
     odometry[:,0] = odometry[:,0]/1e9
+    odometry[:,14] = odometry[:,14] > 9990
+    print "Loaded {} GT and {} OD poses. Odometry failed {} times.".format(len(ground_truth),
+            len(odometry), int(np.sum(odometry[:,14])))
     return ground_truth, odometry
 
 def write_joint_data(ground_truth, odometry, filename):
@@ -156,4 +190,12 @@ def write_joint_data(ground_truth, odometry, filename):
             outfile.write("%.9F " % ground_truth[i][0])
             outfile.write("\n")
         sys.stdout.write("\n")            
+
+def write_pose_matrices(data, filename):
+    with open(filename, 'w') as outfile:
+        for d in data:
+            pose = to_transform(d)
+            for num in pose.flatten().tolist():
+               outfile.write("%f " % num)
+            outfile.write("\n")
 
