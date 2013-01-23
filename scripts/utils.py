@@ -67,29 +67,29 @@ def sample_equal_by_time(ground_truth, odometry, sample_step):
     return np.array(gt_samples), np.array(od_samples)
 
 def sample_equal_by_distance(ground_truth, odometry, sample_step):
-    gt_index = 0
-    while ground_truth[gt_index,0] < odometry[0,0]:
-        gt_index = gt_index + 1
+    
+    # Init output vectors
     gt_samples = []
     od_samples = []
-    start_time = ground_truth[gt_index,0]
-    gt_samples.append(get_pose_sample(ground_truth, start_time))
-    od_samples.append(get_pose_sample(odometry, start_time))
+    gt_samples.append(ground_truth[0,:]);
+    od_samples.append(odometry[0,:]);
 
-    next_index = gt_index
-    subpaths_left = True
-    while subpaths_left:
-        while calc_dist(ground_truth[gt_index], ground_truth[next_index]) < sample_step:
-            next_index = next_index + 1
-            if next_index >= len(ground_truth):
-                subpaths_left = False
+    # Compute the trajectory distance increments
+    dist = trajectory_distances(ground_truth)
+
+    i = 0
+    while i < len(ground_truth):
+        for n in range(i, len(ground_truth) - 1):
+            if (dist[n] - dist[i] > sample_step):
+                # Save samples
+                print "dist: ", dist[n] - dist[i], " | I: ", i, " | N: ", n
+                gt_samples.append(ground_truth[n,:]);
+                od_samples.append(odometry[n,:]);
+                i = n
                 break
-        if subpaths_left:
-            stamp = ground_truth[next_index,0]
-            gt_samples.append(get_pose_sample(ground_truth, stamp))
-            od_samples.append(get_pose_sample(odometry, stamp))
-        gt_index = next_index
-    return np.array(gt_samples), np.array(od_samples)
+        i = i + 1;
+
+    return gt_samples, od_samples
 
 def sample_equal(ground_truth, odometry):
     """ 

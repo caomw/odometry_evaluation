@@ -28,19 +28,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ground_truth, odometry = utils.load_data(args.ground_truth_file, args.odometry_file)
-    print "Loaded", len(ground_truth), "GT data points."
-    print "Loaded", len(odometry), "OD data points."
-
-    print "GT time frame: %.9F %.9F " % (ground_truth[0][0], ground_truth[-1][0])
-    print "OD time frame: %.9F %.9F " % (odometry[0][0], odometry[-1][0])
+    ground_truth, odometry = utils.sample_equal(ground_truth, odometry)
+    print "sample_equal: ", len(ground_truth), "GT /", len(odometry), "OD points:"
+    ground_truth, odometry = utils.rebase(ground_truth), utils.rebase(odometry)
 
     ground_truth, odometry = utils.sample_equal_by_distance(ground_truth, odometry, args.sample_step)
-
-    print "sampled", len(ground_truth), "points:"
-    print "GT time frame: %.9F %.9F " % (ground_truth[0][0], ground_truth[-1][0])
-    print "OD time frame: %.9F %.9F " % (odometry[0][0], odometry[-1][0])
-
-    ground_truth, odometry = utils.rebase(ground_truth), utils.rebase(odometry)
+    print "sample_equal_by_distance: ", len(ground_truth), "GT /", len(odometry), "OD points:"
 
     utils.write_joint_data(ground_truth, odometry, args.outfile)
 
