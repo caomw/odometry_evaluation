@@ -177,14 +177,14 @@ def write_joint_data(ground_truth, odometry, filename):
     assert(len(ground_truth) == len(odometry))
     with open(filename, 'w') as outfile:
         outfile.write("#")
-        for x in range(1,26):
+        for x in range(1,27):
             outfile.write("%6i" % x)
         outfile.write("\n")
         outfile.write("#     t  "
                     "gt_x  gt_y  gt_z  gt_ro gt_pi gt_ya "
                     "gt_vx gt_vy gt_vz gt_vr gt_vp gt_vy "
                     "od_x  od_y  od_z  od_ro od_pi od_ya "
-                    "od_vx od_vy od_vz od_vr od_vp od_vy   ts\n")
+                    "od_vx od_vy od_vz od_vr od_vp od_vy od_failure ts\n")
         sys.stdout.write("\n")
         start_time = ground_truth[0][0]
         for i in range(len(ground_truth)-1):
@@ -198,6 +198,7 @@ def write_joint_data(ground_truth, odometry, filename):
                 outfile.write("%f " % x)
             for x in calc_tf_vel(odometry[i], odometry[i+1]):
                 outfile.write("%f " % x) 
+            outfile.write("%.9F " % odometry[i][14])
             outfile.write("%.9F " % ground_truth[i][0])
             outfile.write("\n")
         sys.stdout.write("\n")            
