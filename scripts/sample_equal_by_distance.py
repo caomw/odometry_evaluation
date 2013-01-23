@@ -15,7 +15,8 @@ import utils
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(
-            description='Evaluate odometry comparing to ground truth')
+            description='Evaluate odometry comparing to ground truth',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('ground_truth_file',
             help='file with ground truth positions')
     parser.add_argument('odometry_file',
