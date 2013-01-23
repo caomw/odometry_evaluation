@@ -195,7 +195,7 @@ def write_pose_matrices(data, filename):
     with open(filename, 'w') as outfile:
         for d in data:
             pose = to_transform(d)
-            for num in pose.flatten().tolist():
+            for num in pose.flatten().tolist()[:12]:
                outfile.write("%f " % num)
             outfile.write("\n")
 
