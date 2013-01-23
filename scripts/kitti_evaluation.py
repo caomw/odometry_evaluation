@@ -71,8 +71,11 @@ def calc_seq_errors(data_gt, data_odom):
 	Function to compute the sequence errors from ground truth and odometry results.
 	"""
 	# Initializations
+	frames_err = []
+	len_err = []
+	speed_err = []
 	r_err = []
-	tp_err = []
+	t_err = []
 
 	# Parameters
 	step_size = 10
@@ -98,9 +101,23 @@ def calc_seq_errors(data_gt, data_odom):
 			pose_delta_od = np.dot(M_od_inv.reshape((4,4)), M_od.reshape((4,4)))
 			pose_error    = np.dot(tf.inverse_matrix(pose_delta_od), pose_delta_gt)
 
+			num_frames = last_frame - first_frame + 1
+      		speed = length / (0.1 * num_frames)
+
 			# Translational and rotational errors
+			frames_err.append(first_frame)
 			r_err.append(rotationError(pose_error) / length)
-			tp_err.append(translationError(pose_error) / length)
+			t_err.append(translationError(pose_error) / length)
+			len_err.append(length)
+			speed_err.append(speed)
+
+	return frames_err, r_err, t_err, len_err, speed_err
+
+def save_error_plots():
+	"""
+	Function to compute the sequence errors from ground truth and odometry results.
+	"""
+	# TODO
 
 
 if __name__ == "__main__":
@@ -113,8 +130,9 @@ if __name__ == "__main__":
             help='file with logged odometry')
     args = parser.parse_args()
 
-    ground_truth = pylab.loadtxt(args.ground_truth_file)
-    odometry = pylab.loadtxt(args.odometry_file)
+    ground_truth, odometry = utils.load_data(args.ground_truth_file, args.odometry_file)
+    ground_truth, odometry = utils.sample_equal(ground_truth, odometry)
+    ground_truth, odometry = utils.rebase(ground_truth), utils.rebase(odometry)
     
     calc_seq_errors(ground_truth, odometry)
 

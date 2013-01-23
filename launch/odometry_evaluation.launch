@@ -1,19 +1,16 @@
 <launch>
 
- 	<!--arg name="bagfile" default="/home/plnegre/Workspace/ROS_fuerte/bagfiles/CIRS-2012-09-survey1_2012-09-07-13-21-37_0.bag /home/plnegre/Workspace/ROS_fuerte/bagfiles/CIRS-2012-09-survey1_2012-09-07-13-22-34_1.bag /home/plnegre/Workspace/ROS_fuerte/bagfiles/CIRS-2012-09-survey1_2012-09-07-13-23-40_2.bag /home/plnegre/Workspace/ROS_fuerte/bagfiles/CIRS-2012-09-survey1_2012-09-07-13-24-46_3.bag /home/plnegre/Workspace/ROS_fuerte/bagfiles/CIRS-2012-09-survey1_2012-09-07-13-25-52_4.bag /home/plnegre/Workspace/ROS_fuerte/bagfiles/CIRS-2012-09-survey1_2012-09-07-13-26-59_5.bag /home/plnegre/Workspace/ROS_fuerte/bagfiles/CIRS-2012-09-survey1_2012-09-07-13-28-05_6.bag /home/plnegre/Workspace/ROS_fuerte/bagfiles/CIRS-2012-09-survey1_2012-09-07-13-29-11_7.bag"/-->
-
- 	<arg name="bagfile" default="/home/plnegre/Workspace/ROS_fuerte/bagfiles/CIRS-2012-09-survey1_2012-09-07-13-21-37_0.bag /home/plnegre/Workspace/ROS_fuerte/bagfiles/CIRS-2012-09-survey1_2012-09-07-13-22-34_1.bag /home/plnegre/Workspace/ROS_fuerte/bagfiles/CIRS-2012-09-survey1_2012-09-07-13-23-40_2.bag /home/plnegre/Workspace/ROS_fuerte/bagfiles/CIRS-2012-09-survey1_2012-09-07-13-24-46_3.bag"/>
+ 	<arg name="bagfile" default="/home/plnegre/Workspace/ROS_fuerte/bagfiles/timefixed-run3_2012-05-07-12-34-04_0.bag /home/plnegre/Workspace/ROS_fuerte/bagfiles/timefixed-run3_2012-05-07-12-35-00_1.bag /home/plnegre/Workspace/ROS_fuerte/bagfiles/timefixed-run3_2012-05-07-12-36-06_2.bag 
+ 	/home/plnegre/Workspace/ROS_fuerte/bagfiles/timefixed-run3_2012-05-07-12-37-12_3.bag 
+ 	/home/plnegre/Workspace/ROS_fuerte/bagfiles/timefixed-run3_2012-05-07-12-38-18_4.bag 
+ 	/home/plnegre/Workspace/ROS_fuerte/bagfiles/timefixed-run3_2012-05-07-12-39-23_5.bag 
+ 	/home/plnegre/Workspace/ROS_fuerte/bagfiles/timefixed-run3_2012-05-07-12-40-29_6.bag"/>
 
 	<arg name="camera" default="/stereo_down" />
 	
-	<!--param name="/use_sim_time" value="true"/-->
+	<param name="/use_sim_time" value="true"/>
 
 	<node pkg="rosbag" type="play" name="rosbag" args="--clock $(arg bagfile)"/>
-
-	<!--include file="$(find fugu_configurations)/launch/common/stereo_pipeline.launch">
-		<arg name="stereo" value="$(arg camera)"/>
-		<arg name="standalone" value="true"/>
-	</include-->
 
 	<include file="$(find fugu_configurations)/launch/common/stereo_image_proc.launch" >
 		<arg name="stereo" value="$(arg camera)" />
@@ -26,14 +23,14 @@
 		<remap from="image" to="image_rect"/>
 	</node>
 
-	<node pkg="mosaic_pose_estimation" type="mosaic_processor_node" name="mosaic_processor_node">
+	<!--node pkg="mosaic_pose_estimation" type="mosaic_processor_node" name="mosaic_processor_node">
 		<rosparam file="$(find mosaic_pose_estimation)/cirs_params.yaml" />
 		<remap from="stereo" to="$(arg camera)"/>
 		<remap from="image" to="image_rect"/>
-	</node>
+	</node-->
 
-	<node pkg="low_pass_pose_filter" type="low_pass_pose_filter" name="low_pass_pose_filter" output="screen">
+	<!--node pkg="low_pass_pose_filter" type="low_pass_pose_filter" name="low_pass_pose_filter" output="screen">
 		<remap from="odometer" to="/stereo_odometer/odometry"/>
-	</node>
+	</node-->
 
 </launch>

@@ -13,6 +13,17 @@ class Error(Exception):
     """ Base class for exceptions in this module. """
     pass
 
+def trajectory_distances(data):
+    """
+    Function to compute the trajectory distances from a dataset where
+    each row contains the transformation matrix.
+    """
+    dist = []
+    dist.append(0)
+    for i in range(len(data) - 1):
+        dist.append(dist[i] + calc_dist(data[i, :], data[i + 1, : ]))
+    return dist
+
 def calc_dist_xyz(data_point1, data_point2):
     xdiff = data_point1[1] - data_point2[1]
     ydiff = data_point1[2] - data_point2[2]
