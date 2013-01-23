@@ -82,7 +82,6 @@ def sample_equal_by_distance(ground_truth, odometry, sample_step):
         for n in range(i, len(ground_truth) - 1):
             if (dist[n] - dist[i] > sample_step):
                 # Save samples
-                print "dist: ", dist[n] - dist[i], " | I: ", i, " | N: ", n
                 gt_samples.append(ground_truth[n,:]);
                 od_samples.append(odometry[n,:]);
                 i = n
