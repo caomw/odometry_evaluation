@@ -10,6 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import tf.transformations as tf
 import random
 import numpy as np
+import string
 
 class Error(Exception):
     """ Base class for exceptions in this module. """
@@ -29,54 +30,64 @@ def calc_angle_diff(arr1, arr2):
         diffs.append(angle_diff(arr1[i], arr2[i]))
     return np.array(diffs)
 
+def toRSTtable(rows, header=True, vdelim="  ", padding=1, justify='right'):
+    """
+    Outputs a list of lists as a Restructured Text Table
+    - rows - list of lists
+    - header - if True the first row is treated as a table header
+    - vdelim - vertical delimiter between columns
+    - padding - nr. of spaces are left around the longest element in the column
+    - justify - may be left, center, right
+    """
+    border="=" # character for drawing the border
+    justify = {'left':string.ljust,'center':string.center,'right':string.rjust}[justify.lower()]
+
+    # calculate column widhts (longest item in each col
+    # plus "padding" nr of spaces on both sides)
+    cols = zip(*rows)
+    colWidths = [max([len(str(item))+2*padding for item in col]) for col in cols]
+
+    # the horizontal border needed by rst
+    borderline = vdelim.join([w*border for w in colWidths])
+
+    # outputs table in rst format
+    print borderline
+    for row in rows:
+        print vdelim.join([justify(str(item),width) for (item,width) in zip(row,colWidths)])
+        if header: print borderline; header=False
+    print borderline
+
+def evaluate(data):
+    """
+    Calculates and returns errors of input data.
+    """
+    t = np.sum(np.abs(data[:,7:10])**2,axis=-1)**(1./2)
+    t_est = np.sum(np.abs(data[:,19:22])**2,axis=-1)**(1./2)
+    t_err = t_est - t
+    r = data[:,10:13]
+    r_est = data[:,22:25]
+    yaw_err = calc_angle_diff(r[2], r_est[2])
+    header = ["Translation MAE", "Yaw-Rotation MAE"]
+    t_mae = np.average(np.abs(t_err), 0)
+    yaw_mae = np.average(np.abs(yaw_err), 0)
+    return header, ["{:10.6f}".format(t_mae), "{:10.6f}".format(yaw_mae)]
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(
             description='Evaluate odometry comparing to ground truth')
-    parser.add_argument('filename',
-            help='file with ground truth and estimated positions and velocities')
+    parser.add_argument('filename', nargs='+',
+            help='file(s) with ground truth and estimated positions and velocities')
     args = parser.parse_args()
 
-    data = pylab.loadtxt(args.filename)
-    total_dist_gt = 0;
-    total_dist_od = 0;
-    for i in range(len(data) - 1):
-        xdiff_gt = data[i,1] - data[i+1,1]
-        ydiff_gt = data[i,2] - data[i+1,2]
-        zdiff_gt = data[i,3] - data[i+1,3]
-        xdiff_od = data[i,13] - data[i+1,13]
-        ydiff_od = data[i,14] - data[i+1,14]
-        zdiff_od = data[i,15] - data[i+1,15]
-        total_dist_gt += math.sqrt(xdiff_gt*xdiff_gt + ydiff_gt*ydiff_gt + zdiff_gt*zdiff_gt)
-        total_dist_od += math.sqrt(xdiff_od*xdiff_od + ydiff_od*ydiff_od + zdiff_od*zdiff_od)
-    np.set_printoptions(precision=4)
-    errors = data[:,19:25]-data[:,7:13]
-    errors100 = errors/data[:,7:13]*100
-    errors[:,3:6] = errors[:,3:6] / np.pi * 180.0
+    rows = []
+    header = []
+    for filename in args.filename:
+        data = pylab.loadtxt(filename)
+        print "Loaded {} data points from {}".format(len(data), filename)
+        header, this_errors = evaluate(data)
+        rows.append([filename] + [len(data)] + this_errors)
+    header = ["Filename", "Data Points"] + header
 
-    t = np.sum(np.abs(data[:,7:10])**2,axis=-1)**(1./2)
-    t_est = np.sum(np.abs(data[:,19:22])**2,axis=-1)**(1./2)
-    t_err = t_est - t
-    t_err100 = t_err/t*100
-    r = data[:,10:13]
-    r_est = data[:,22:25]
-    yaw_err = calc_angle_diff(r[2], r_est[2])
-    yaw_err100 = yaw_err/r[2]*100
-    print chr(27)+"[0m"
-    print "%i data samples." % len(data)
-    print chr(27)+"[1;36m"+"Total distance in data (GT): "+chr(27)+"[0m", total_dist_gt
-    print chr(27)+"[1;36m"+"Total distance in data (OD): "+chr(27)+"[0m", total_dist_od
-    print chr(27)+"[1;36m"+"Translation error (average, average of absolute, stddev of absolute):\n"+chr(27)+"[0m", np.average(t_err, 0), np.average(np.abs(t_err), 0), np.std(np.abs(t_err), 0)
-    print chr(27)+"[1;36m"+"Rotation error (yaw) (average, average of absolute, stddev of absolute):\n"+chr(27)+"[0m", np.average(yaw_err, 0), np.average(np.abs(yaw_err), 0), np.std(np.abs(yaw_err), 0)
-    """
-    print chr(27)+"[1;36m"+"Average velocities in data (GT):\n"+chr(27)+"[0m", np.average(data[:,7:13], 0)
-    print chr(27)+"[1;36m"+"Average velocities in data (OD):\n"+chr(27)+"[0m", np.average(data[:,19:25], 0)
-    print chr(27)+"[1;36m"+"Average error (should be near zero)\n"+chr(27)+"[0m", np.average(errors, 0), np.std(errors, 0)
-    print chr(27)+"[1;36m"+"Average absolute error\n"+chr(27)+"[0m", np.average(np.abs(errors), 0), np.std(np.abs(errors), 0)
-    print chr(27)+"[1;36m"+"Error percentage (should be near zero)\n"+chr(27)+"[0m", np.average(errors100, 0), np.std(errors100, 0)
-    print chr(27)+"[1;36m"+"Error percentage absolute error\n"+chr(27)+"[0m", np.average(np.abs(errors100), 0), np.std(np.abs(errors100), 0)
-    print chr(27)+"[1;36m"+"Translation error %:\n"+chr(27)+"[0m", np.average(t_err100, 0), np.std(t_err100, 0)
-    print chr(27)+"[1;36m"+"Rotational yaw error:\n"+chr(27)+"[0m", np.average(yaw_err, 0), np.std(yaw_err, 0)
-    print chr(27)+"[1;36m"+"Rotational yaw error %:\n"+chr(27)+"[0m", np.average(yaw_err100, 0), np.std(yaw_err100, 0)
-    """
+    toRSTtable([header] + rows)
 
