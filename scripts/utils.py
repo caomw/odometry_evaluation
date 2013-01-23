@@ -84,7 +84,7 @@ def sample_equal_by_distance(ground_truth, odometry, sample_step):
                 # Save samples
                 gt_samples.append(ground_truth[n,:]);
                 od_samples.append(odometry[n,:]);
-                i = n
+                i = n - 1
                 break
         i = i + 1;
 

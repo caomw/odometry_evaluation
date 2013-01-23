@@ -30,11 +30,11 @@ if __name__ == "__main__":
 
     ground_truth, odometry = utils.load_data(args.ground_truth_file, args.odometry_file)
     ground_truth, odometry = utils.sample_equal(ground_truth, odometry)
-    print "sample_equal: ", len(ground_truth), "GT /", len(odometry), "OD points:"
+    print "sample_equal: ", len(ground_truth), "GT /", len(odometry), "OD (# of failures: ", int(np.sum(np.array(odometry)[:,14])), ")"
     ground_truth, odometry = utils.rebase(ground_truth), utils.rebase(odometry)
 
     ground_truth, odometry = utils.sample_equal_by_distance(ground_truth, odometry, args.sample_step)
-    print "sample_equal_by_distance: ", len(ground_truth), "GT /", len(odometry), "OD points:"
+    print "sample_equal_by_distance: ", len(ground_truth), "GT /", len(odometry), "OD (# of failures: ", int(np.sum(np.array(odometry)[:,14])), ")"
 
     utils.write_joint_data(ground_truth, odometry, args.outfile)
 

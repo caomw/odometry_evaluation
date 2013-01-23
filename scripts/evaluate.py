@@ -57,20 +57,25 @@ def toRSTtable(rows, header=True, vdelim="  ", padding=1, justify='right'):
         if header: print borderline; header=False
     print borderline
 
-def evaluate(data):
+def evaluate(data, filter_string="True"):
     """
     Calculates and returns errors of input data.
     """
+
+    # Re-build the data depending on the filter
+    data = [row for row in data if eval(filter_string)]
+    data = np.array(data)
+
+    # Compute translation and rotation errors
     t = np.sum(np.abs(data[:,7:10])**2,axis=-1)**(1./2)
     t_est = np.sum(np.abs(data[:,19:22])**2,axis=-1)**(1./2)
     t_err = t_est - t
     r = data[:,10:13]
     r_est = data[:,22:25]
     yaw_err = calc_angle_diff(r[2], r_est[2])
-    header = ["Translation MAE", "Yaw-Rotation MAE"]
     t_mae = np.average(np.abs(t_err), 0)
     yaw_mae = np.average(np.abs(yaw_err), 0)
-    return header, ["{:10.6f}".format(t_mae), "{:10.6f}".format(yaw_mae)]
+    return ["{:10.6f}".format(t_mae), "{:10.6f}".format(yaw_mae)]
 
 if __name__ == "__main__":
     import argparse
@@ -80,14 +85,19 @@ if __name__ == "__main__":
             help='file(s) with ground truth and estimated positions and velocities')
     args = parser.parse_args()
 
+    # Evaluate each input file
     rows = []
-    header = []
     for filename in args.filename:
         data = pylab.loadtxt(filename)
         print "Loaded {} data points from {}".format(len(data), filename)
-        header, this_errors = evaluate(data)
-        rows.append([filename] + [len(data)] + this_errors)
-    header = ["Filename", "Data Points"] + header
+        this_errors = evaluate(data)
+        this_errors_no_failures = evaluate(data, "row[25] == 0")
+        rows.append([filename] + [len(data)] + this_errors + this_errors_no_failures)
+
+    # Build the header for the output table
+    header = [  "Filename", "Data Points", 
+                "Trans. MAE (with failures)", "Yaw-Rot. MAE (with failures)", 
+                "Trans. MAE (no failures)", "Yaw-Rot. MAE (no failures)"]
 
     toRSTtable([header] + rows)
 
