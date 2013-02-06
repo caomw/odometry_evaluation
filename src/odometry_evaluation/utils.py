@@ -126,6 +126,7 @@ def sample_equal(ground_truth, odometry, detect_failures = False):
                 od_samples.append(odometry[od_index])
                 od_index = od_index + 1
                 gt_index = gt_index + 1
+
     except IndexError:
         pass
 
@@ -241,8 +242,12 @@ def toRSTtable(rows, header=True, vdelim="  ", padding=1, justify='right'):
     borderline = vdelim.join([w*border for w in colWidths])
 
     # outputs table in rst format
-    print borderline
+    output = ""
+    output += borderline + "\n"
     for row in rows:
-        print vdelim.join([justify(str(item),width) for (item,width) in zip(row,colWidths)])
-        if header: print borderline; header=False
-    print borderline
+        output += vdelim.join([justify(str(item),width) for (item,width) in zip(row,colWidths)])
+        output += "\n"
+        if header: output += borderline + "\n"; header=False
+    output += borderline + "\n"
+    print output
+    return output
