@@ -8,6 +8,7 @@ import tf
 import tf.transformations as tf
 import random
 import numpy as np
+import string
 
 class Error(Exception):
     """ Base class for exceptions in this module. """
@@ -90,7 +91,7 @@ def sample_equal_by_distance(ground_truth, odometry, sample_step):
 
     return gt_samples, od_samples
 
-def sample_equal(ground_truth, odometry):
+def sample_equal(ground_truth, odometry, detect_failures = False):
     """ 
     Samples ground truth and odometry searching for
     matching timestamps without any limitations of
@@ -99,19 +100,27 @@ def sample_equal(ground_truth, odometry):
     samples are sorted out as the odometry is not fast
     enough.
     """
-    eps = 1e-3
+    eps = 0.005
     gt_index = 0
     od_index = 0
     gt_samples = []
     od_samples = []
+
     try:
         while True:
+            failure = False
             while odometry[od_index,0] - ground_truth[gt_index,0] > eps:
                 gt_index = gt_index + 1
-            while ground_truth[gt_index,0] - odometry[od_index,0] > eps :
+            while ground_truth[gt_index,0] - odometry[od_index,0] > eps:
                 od_index = od_index + 1
+                if (odometry[od_index,14] == 1):
+                    failure = True
 
             if abs(ground_truth[gt_index,0] - odometry[od_index,0]) < eps:
+                # save previous failures in the current sample
+                if (detect_failures and failure):
+                    odometry[od_index,14] = 1
+
                 # save
                 gt_samples.append(ground_truth[gt_index])
                 od_samples.append(odometry[od_index])
@@ -119,6 +128,7 @@ def sample_equal(ground_truth, odometry):
                 gt_index = gt_index + 1
     except IndexError:
         pass
+
     return np.array(gt_samples), np.array(od_samples)
 
 def calc_tf_vel(point1, point2):
@@ -210,3 +220,29 @@ def write_pose_matrices(data, filename):
                outfile.write("%f " % num)
             outfile.write("\n")
 
+def toRSTtable(rows, header=True, vdelim="  ", padding=1, justify='right'):
+    """
+    Outputs a list of lists as a Restructured Text Table
+    - rows - list of lists
+    - header - if True the first row is treated as a table header
+    - vdelim - vertical delimiter between columns
+    - padding - nr. of spaces are left around the longest element in the column
+    - justify - may be left, center, right
+    """
+    border="=" # character for drawing the border
+    justify = {'left':string.ljust,'center':string.center,'right':string.rjust}[justify.lower()]
+
+    # calculate column widhts (longest item in each col
+    # plus "padding" nr of spaces on both sides)
+    cols = zip(*rows)
+    colWidths = [max([len(str(item))+2*padding for item in col]) for col in cols]
+
+    # the horizontal border needed by rst
+    borderline = vdelim.join([w*border for w in colWidths])
+
+    # outputs table in rst format
+    print borderline
+    for row in rows:
+        print vdelim.join([justify(str(item),width) for (item,width) in zip(row,colWidths)])
+        if header: print borderline; header=False
+    print borderline

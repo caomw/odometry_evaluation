@@ -29,7 +29,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ground_truth, odometry = utils.load_data(args.ground_truth_file, args.odometry_file)
-    ground_truth, odometry = utils.sample_equal(ground_truth, odometry)
+    ground_truth, odometry = utils.sample_equal(ground_truth, odometry, True)
     print "sample_equal: ", len(ground_truth), "GT /", len(odometry), "OD (# of failures: ", int(np.sum(np.array(odometry)[:,14])), ")"
     ground_truth, odometry = utils.rebase(ground_truth), utils.rebase(odometry)
 
