@@ -35,6 +35,14 @@ def calc_dist(data_point1, data_point2):
     xdiff, ydiff, zdiff = calc_dist_xyz(data_point1, data_point2)
     return math.sqrt(xdiff*xdiff + ydiff*ydiff + zdiff*zdiff)
 
+def angle_diff(ang1, ang2):
+    diff = ang2 - ang1
+    while diff < -np.pi:
+        diff += 2*np.pi
+    while diff > np.pi:
+        diff -= 2*np.pi
+    return diff
+
 def get_pose_sample(data, timestamp):
     start_time = data[0,0]
     end_time = data[-1,0]
@@ -207,7 +215,7 @@ def write_joint_data(ground_truth, odometry, filename):
             for x in calc_tf_vel(ground_truth[i], ground_truth[i+1]):
                 outfile.write("%f " % x)
             for x in calc_tf_vel(odometry[i], odometry[i+1]):
-                outfile.write("%f " % x) 
+                outfile.write("%f " % x)
             outfile.write("%.9F " % odometry[i][14])
             outfile.write("%.9F " % ground_truth[i][0])
             outfile.write("\n")

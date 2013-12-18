@@ -1,22 +1,20 @@
 <launch>
 
- 	<arg name="bagfile" default="/home/plnegre/Workspace/ROS_fuerte/bagfiles/timefixed-run3_2012-05-07-12-38-18_4.bag"/>
+ 	<arg name="bagfile" default="/home/plnegre/Workspace/ROS_fuerte/data/bagfiles/pool_tests_2012-02-29-15-38-43_1_red.bag"/>
 
-	<arg name="camera" default="/stereo_down" />
+	<arg name="camera" default="/camera_comp_wide" />
 	
 	<param name="/use_sim_time" value="true"/>
 
 	<node pkg="rosbag" type="play" name="rosbag" args="--clock $(arg bagfile)" required="true"/>
 
-	<include file="$(find fugu_configurations)/launch/common/stereo_image_proc.launch" >
-		<arg name="stereo" value="$(arg camera)" />
-		<arg name="standalone" value="true" />
-		<arg name="manager" value="manager" />
-	</include>
+	<group ns="$(arg camera)">
+		<node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" />
+	</group>
 
-	<node pkg="viso2_ros" type="stereo_odometer" name="stereo_odometer">
-		<remap from="stereo" to="$(arg camera)"/>
-		<remap from="image" to="image_rect"/>
-	</node>
+	<node pkg="viso2_ros" type="stereo_odometer" name="stereo_odometer" output="screen">
+    <remap from="stereo" to="$(arg camera)"/>
+    <remap from="image" to="image_rect_color"/>
+  </node>
 	
 </launch>

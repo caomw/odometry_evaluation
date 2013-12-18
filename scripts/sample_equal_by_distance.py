@@ -10,7 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import tf.transformations as tf
 import random
 import numpy as np
-import utils
+from odometry_evaluation import utils
 
 if __name__ == "__main__":
     import argparse
