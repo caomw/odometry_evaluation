@@ -8,5 +8,5 @@ catkin_package()
 
 catkin_python_setup()
 
-install(PROGRAMS scripts/evaluate scripts/utils
+install(PROGRAMS scripts/odometry_evaluation/evaluate.py scripts/odometry_evaluation/utils.py
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
